@@ -1,0 +1,126 @@
+:root {
+  --primary: #0a66c2;
+  --accent: #16a34a;
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: .6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn.secondary {
+  background: #111827;
+}
+.btn.success {
+  background: var(--accent);
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: .6rem .7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+.nav {
+  display: flex;
+  gap: .75rem;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  padding: .6rem .5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.badge {
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: .8rem;
+}
+.status-pending {
+  background: #fffbeb;
+  color: #92400e;
+}
+.status-approved {
+  background: #ecfdf5;
+  color: #065f46;
+}
+.status-rejected {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #fff;
+  border-right: 1px solid var(--border);
+  padding: 1rem;
+}
+.sidebar a {
+  display: block;
+  padding: .5rem .25rem;
+  color: var(--text);
+}
+.sidebar a.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+.main {
+  padding: 1rem;
+}
