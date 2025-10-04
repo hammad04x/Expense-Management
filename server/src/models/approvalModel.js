@@ -26,6 +26,43 @@ export async function getApprovalsForApprover(approverId) {
   return rows
 }
 
+// New function to get approvals that should be visible to the approver (sequential workflow)
+export async function getVisibleApprovalsForApprover(approverId, approverRole) {
+  if (approverRole === 'MANAGER') {
+    // Managers can only see Level 1 approvals that are pending
+    const [rows] = await pool.query(
+      `SELECT a.*, e.amount, e.currency, e.category, e.description, e.expense_date, e.status AS expense_status, 
+              u.name as user_name, u.email as user_email
+       FROM approvals a 
+       JOIN expenses e ON a.expense_id=e.id 
+       JOIN users u ON e.user_id=u.id
+       WHERE a.approver_id=? AND a.status="PENDING" AND a.level=1
+       ORDER BY e.created_at DESC`,
+      [approverId],
+    )
+    return rows
+  } else if (approverRole === 'ADMIN') {
+    // Admins can see Level 2 approvals that are pending AND Level 1 has been decided
+    const [rows] = await pool.query(
+      `SELECT a.*, e.amount, e.currency, e.category, e.description, e.expense_date, e.status AS expense_status, 
+              u.name as user_name, u.email as user_email,
+              prev_a.status as prev_level_status, prev_a.comment as prev_level_comment,
+              prev_u.name as prev_approver_name
+       FROM approvals a 
+       JOIN expenses e ON a.expense_id=e.id 
+       JOIN users u ON e.user_id=u.id
+       LEFT JOIN approvals prev_a ON prev_a.expense_id = e.id AND prev_a.level = 1
+       LEFT JOIN users prev_u ON prev_a.approver_id = prev_u.id
+       WHERE a.approver_id=? AND a.status="PENDING" AND a.level=2
+       AND prev_a.status IN ('APPROVED', 'REJECTED')
+       ORDER BY e.created_at DESC`,
+      [approverId],
+    )
+    return rows
+  }
+  return []
+}
+
 export async function getApprovalsForExpenseWithDetails(expenseId) {
   const [rows] = await pool.query(
     `SELECT a.*, u.name as approver_name, u.email as approver_email, u.role as approver_role

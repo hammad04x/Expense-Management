@@ -9,6 +9,13 @@ import { generateApprovalChain } from "../utils/approvalEngine.js"
 
 export async function submitExpense(req, res) {
   try {
+    // Only employees can submit expenses
+    if (req.user.role !== 'EMPLOYEE') {
+      return res.status(403).json({ 
+        error: "Access denied. Only employees can submit expense requests. Managers and admins can only review and approve expenses." 
+      })
+    }
+    
     const { amount, currency, category, description, expense_date } = req.body
     const receipt_url = req.file ? `/uploads/${req.file.filename}` : null
     const expenseId = await createExpense({
@@ -20,11 +27,13 @@ export async function submitExpense(req, res) {
       expense_date,
       receipt_url,
     })
+    // Only create Level 1 (Manager) approvals initially
     await generateApprovalChain({
       companyId: req.user.company_id,
       submitterId: req.user.id,
       amount: Number(amount),
       expenseId,
+      startLevel: 1
     })
     const exp = await getExpenseById(expenseId)
     return res.json(exp)

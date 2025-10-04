@@ -2,18 +2,32 @@ import { getRulesForCompany } from "../models/ruleModel.js"
 import { getUserById, listUsers } from "../models/userModel.js"
 import { createApproval } from "../models/approvalModel.js"
 
-export async function generateApprovalChain({ companyId, submitterId, amount, expenseId }) {
+export async function generateApprovalChain({ companyId, submitterId, amount, expenseId, startLevel = 1 }) {
   // Hierarchical approval: Level 1 -> MANAGER, Level 2 -> ADMIN
   const rules = await getRulesForCompany(companyId)
   const submitter = await getUserById(submitterId)
   const companyUsers = await listUsers(companyId)
 
-  for (const rule of rules) {
+  // Sort rules by level to ensure proper order
+  const sortedRules = rules.sort((a, b) => a.level - b.level)
+
+  for (const rule of sortedRules) {
+    // Only create approvals for the specified start level
+    if (rule.level !== startLevel) continue
+    
     if (rule.role_required === "MANAGER") {
-      // Find all managers in the company
-      const managers = companyUsers.filter(user => user.role === 'MANAGER')
-      for (const manager of managers) {
-        await createApproval(expenseId, manager.id, rule.level)
+      // For employees: find their direct manager
+      // For managers/admins: find any manager (they can approve each other)
+      if (submitter.role === 'EMPLOYEE' && submitter.manager_id) {
+        // Employee's direct manager
+        await createApproval(expenseId, submitter.manager_id, rule.level)
+      } else {
+        // For managers/admins, find any manager in the company
+        const managers = companyUsers.filter(user => user.role === 'MANAGER')
+        if (managers.length > 0) {
+          // Use the first manager found (or could be more sophisticated)
+          await createApproval(expenseId, managers[0].id, rule.level)
+        }
       }
     } else if (rule.role_required === "ADMIN") {
       // Find all admins in the company
@@ -23,4 +37,9 @@ export async function generateApprovalChain({ companyId, submitterId, amount, ex
       }
     }
   }
+}
+
+// New function to create only the next level approvals
+export async function createNextLevelApprovals({ companyId, submitterId, amount, expenseId, level }) {
+  await generateApprovalChain({ companyId, submitterId, amount, expenseId, startLevel: level })
 }
