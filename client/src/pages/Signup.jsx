@@ -6,11 +6,11 @@ import { signup } from "../services/auth"
 import Icon from "../components/Icons"
 
 export default function Signup() {
-  const [companyName, setCompanyName] = useState("New Co")
-  const [defaultCurrency, setDefaultCurrency] = useState("USD")
-  const [name, setName] = useState("Your Name")
-  const [email, setEmail] = useState("you@example.com")
-  const [password, setPassword] = useState("admin123")
+  const [companyName, setCompanyName] = useState("")
+  const [defaultCurrency, setDefaultCurrency] = useState("")
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const nav = useNavigate()
 

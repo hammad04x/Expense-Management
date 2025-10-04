@@ -5,10 +5,12 @@ import Layout from "../components/Layout"
 import { api, setAuthToken } from "../services/api"
 import { getToken, me } from "../services/auth"
 import Icon from "../components/Icons"
+import ReceiptModal from "../components/ReceiptModal"
 
 export default function ExpenseHistory() {
   const [user, setUser] = useState(null)
   const [rows, setRows] = useState([])
+  const [selectedReceipt, setSelectedReceipt] = useState(null)
 
   useEffect(() => {
     const t = getToken()
@@ -18,6 +20,7 @@ export default function ExpenseHistory() {
   }, [])
 
   if (!user) return null
+  
   const getStatusColor = (status) => {
     switch (status) {
       case "APPROVED": return "success"
@@ -40,11 +43,17 @@ export default function ExpenseHistory() {
     }
   }
 
+  const formatReceiptUrl = (url) => {
+    // If it already starts with http, return as-is; otherwise prepend localhost
+    if (!url) return null
+    return url.startsWith("http") ? url : `${url}`
+  }
+
   return (
     <Layout role={user.role}>
       <div className="card">
         <h3>
-<Icon name="expenses" size={20} color="var(--primary-600)" />
+          <Icon name="expenses" size={20} color="var(--primary-600)" />
           My Expenses
         </h3>
         <p style={{ color: "var(--gray-600)", marginBottom: "var(--space-6)" }}>
@@ -112,17 +121,15 @@ export default function ExpenseHistory() {
                     </td>
                     <td>
                       {r.receipt_url ? (
-                        <a 
-                          href={`http://localhost:5000${r.receipt_url}`} 
-                          target="_blank" 
-                          rel="noreferrer"
+                        <button 
+                          onClick={() => setSelectedReceipt(formatReceiptUrl(r.receipt_url))}
                           className="btn btn-sm secondary"
-                          style={{ textDecoration: "none" }}
+                          style={{ fontSize: "0.75rem", textDecoration: "none" }}
                         >
-                          📄 View
-                        </a>
+                          📄 View Full
+                        </button>
                       ) : (
-                        <span style={{ color: "var(--gray-400)" }}>-</span>
+                        <span style={{ color: "var(--gray-400)" }}>No receipt</span>
                       )}
                     </td>
                   </tr>
@@ -148,6 +155,13 @@ export default function ExpenseHistory() {
           </a>
         </div>
       </div>
+      
+      {selectedReceipt && (
+        <ReceiptModal 
+          receiptUrl={selectedReceipt} 
+          onClose={() => setSelectedReceipt(null)} 
+        />
+      )}
     </Layout>
   )
 }

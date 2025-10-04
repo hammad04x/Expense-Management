@@ -514,6 +514,8 @@ p {
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-200);
+  overflow: scroll;
+  scrollbar-width: none;
 }
 
 .table {

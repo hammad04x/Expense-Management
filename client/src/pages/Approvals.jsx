@@ -5,12 +5,14 @@ import Layout from "../components/Layout"
 import { api, setAuthToken } from "../services/api"
 import { getToken, me } from "../services/auth"
 import Icon from "../components/Icons"
+import ReceiptModal from "../components/ReceiptModal"
 
 export default function Approvals() {
   const [user, setUser] = useState(null)
   const [pendingApprovals, setPendingApprovals] = useState([])
   const [allExpenses, setAllExpenses] = useState([])
   const [comments, setComments] = useState({})
+  const [selectedReceipt, setSelectedReceipt] = useState(null)
 
   useEffect(() => {
     const t = getToken()
@@ -25,8 +27,18 @@ export default function Approvals() {
         api.get("/approvals"),
         api.get("/approvals/expenses")
       ])
-      setPendingApprovals(approvalsRes.data)
+
       setAllExpenses(expensesRes.data)
+
+      // Merge receipt_url from expenses into pending approvals
+      const enrichedPendingApprovals = approvalsRes.data.map(pa => {
+        const expense = expensesRes.data.find(e => e.id === pa.expense_id)
+        return { ...pa, receipt_url: expense?.receipt_url || null }
+      })
+
+      setPendingApprovals(enrichedPendingApprovals)
+      console.log("Pending Approvals:", enrichedPendingApprovals)
+      console.log("All Expenses:", expensesRes.data)
     } catch (error) {
       console.error("Failed to load data:", error)
     }
@@ -52,19 +64,25 @@ export default function Approvals() {
     }
   }
 
+  const formatReceiptUrl = (url) => {
+    if (!url) return null
+    return url.startsWith("http") ? url : `${url}`
+  }
+
   if (!user) return null
+
   return (
     <Layout role={user.role}>
       <div className="grid">
         {/* Pending Approvals */}
         <div className="card">
           <h3>
-<Icon name="pending" size={20} color="var(--warning-600)" />
+            <Icon name="pending" size={20} color="var(--warning-600)" />
             Pending Approvals
           </h3>
           {pendingApprovals.length === 0 ? (
             <div className="empty-state">
-<Icon name="approved" size={20} color="var(--success-600)" />
+              <Icon name="approved" size={20} color="var(--success-600)" />
               <h3>All caught up!</h3>
               <p>No pending approvals at the moment.</p>
             </div>
@@ -77,6 +95,7 @@ export default function Approvals() {
                     <th>Description</th>
                     <th>Amount</th>
                     <th>Category</th>
+                    <th>Receipt</th>
                     <th>Level</th>
                     <th>Actions</th>
                   </tr>
@@ -120,10 +139,24 @@ export default function Approvals() {
                         <span className="badge secondary">{r.category}</span>
                       </td>
                       <td>
+                        {r.receipt_url ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "center" }}>
+                            
+                            <button
+                              className="btn btn-sm secondary"
+                              onClick={() => setSelectedReceipt(formatReceiptUrl(r.receipt_url))}
+                            >
+                              📄 View Receipt
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--gray-400)" }}>No receipt</span>
+                        )}
+                      </td>
+                      <td>
                         <span className="badge primary">Level {r.level}</span>
                       </td>
                       <td style={{ minWidth: "300px" }}>
-                        {/* Show manager's decision to admin */}
                         {r.level === 2 && r.prev_level_status && (
                           <div style={{ 
                             marginBottom: "var(--space-3)", 
@@ -157,13 +190,13 @@ export default function Approvals() {
                             className="btn success btn-sm" 
                             onClick={() => act(r.id, "APPROVED", r.expense_id)}
                           >
-<Icon name="approved" size={16} color="white" /> Approve
+                            <Icon name="approved" size={16} color="white" /> Approve
                           </button>
                           <button 
                             className="btn danger btn-sm" 
                             onClick={() => act(r.id, "REJECTED", r.expense_id)}
                           >
-<Icon name="rejected" size={16} color="white" /> Reject
+                            <Icon name="rejected" size={16} color="white" /> Reject
                           </button>
                         </div>
                       </td>
@@ -220,38 +253,33 @@ export default function Approvals() {
                         {new Date(expense.expense_date).toLocaleDateString()}
                       </div>
                     </div>
+                    {expense.receipt_url && (
+                      <div className="expense-detail">
+                        <div className="expense-detail-label">Receipt</div>
+                        <div className="expense-detail-value">
+                          <button
+                            className="btn btn-sm secondary"
+                            onClick={() => setSelectedReceipt(formatReceiptUrl(expense.receipt_url))}
+                          >
+                            📄 View Receipt
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Approval Status */}
-                  {expense.approvals && expense.approvals.length > 0 && (
-                    <div className="approval-status">
-                      <div style={{ fontSize: "0.875rem", fontWeight: "600", marginBottom: "var(--space-3)", color: "var(--gray-700)" }}>
-                        Approval Status:
-                      </div>
-                      <div className="space-y-2">
-                        {expense.approvals.map((approval, index) => (
-                          <div key={approval.id} className="approval-level">
-                            <div className="approval-level-label">Level {approval.level}:</div>
-                            <div className="approval-level-name">{approval.approver_name} ({approval.approver_role})</div>
-                            <span className={`badge ${getStatusColor(approval.status)}`}>
-                              {approval.status}
-                            </span>
-                            {approval.comment && (
-                              <div className="approval-level-comment">
-                                "{approval.comment}"
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {selectedReceipt && (
+        <ReceiptModal 
+          receiptUrl={selectedReceipt} 
+          onClose={() => setSelectedReceipt(null)} 
+        />
+      )}
     </Layout>
   )
 }

@@ -7,8 +7,8 @@ import "../styles/main.css"
 import Icon from "../components/Icons"
 
 export default function Login() {
-  const [email, setEmail] = useState("admin@acme.com")
-  const [password, setPassword] = useState("admin123")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const nav = useNavigate()
 
@@ -157,21 +157,7 @@ export default function Login() {
           </p>
         </div>
 
-        <div style={{ 
-          marginTop: "var(--space-6)", 
-          padding: "var(--space-4)", 
-          background: "var(--gray-50)", 
-          borderRadius: "var(--radius-md)",
-          fontSize: "0.875rem",
-          color: "var(--gray-600)"
-        }}>
-          <div style={{ fontWeight: "600", marginBottom: "var(--space-2)", color: "var(--gray-700)" }}>
-            Demo Credentials:
-          </div>
-          <div>👑 Admin: admin@acme.com / admin123</div>
-          <div>👔 Manager: manager@acme.com / manager123</div>
-          <div>👤 Employee: emp1@acme.com / user123</div>
-        </div>
+       
       </div>
     </div>
   )
